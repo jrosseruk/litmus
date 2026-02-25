@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import statistics
-import subprocess
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -139,27 +137,10 @@ def eval(
 @app.command()
 def view(
     log_dir: str = typer.Option("./logs", "--log-dir", help="Directory containing eval logs"),
-    port: int = typer.Option(8501, "--port", help="Streamlit port"),
+    port: int = typer.Option(8501, "--port", help="Port for the viewer server"),
 ) -> None:
-    """Launch the Streamlit viewer for browsing eval results."""
-    viewer_path = Path(__file__).parent / "viewer" / "app.py"
-    if not viewer_path.exists():
-        console.print(f"[red]Viewer not found at {viewer_path}[/red]")
-        raise typer.Exit(1)
+    """Launch the web viewer for browsing and comparing eval results."""
+    from litmus.viewer.server import run_server
 
-    console.print(f"[bold]Launching Streamlit viewer[/bold] on port {port}")
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "streamlit",
-            "run",
-            str(viewer_path),
-            "--server.port",
-            str(port),
-            "--",
-            "--log-dir",
-            log_dir,
-        ],
-        check=True,
-    )
+    console.print(f"[bold]Launching viewer[/bold] at http://localhost:{port}")
+    run_server(log_dir=log_dir, port=port)

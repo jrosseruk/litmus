@@ -79,7 +79,7 @@ dependencies = [
   "trl>=0.24.0",
 # "flash-attn",
   "petri",
-  "streamlit>=1.30.0",
+  "aiohttp>=3.9.0",
 ]
 
 [project.scripts]

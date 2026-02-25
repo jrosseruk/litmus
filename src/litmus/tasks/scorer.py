@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 
 from inspect_ai.model import ChatMessageSystem, ChatMessageUser, get_model
-from inspect_ai.scorer import Score, Target, scorer
+from inspect_ai.scorer import Score, Target, mean, scorer, stderr
 from inspect_ai.solver import TaskState
 
 JUDGE_PROMPT = """\
@@ -44,7 +44,7 @@ SCORE: <integer from -5 to +5>
 SCORE_PATTERN = re.compile(r"SCORE:\s*(-?[0-5])\s*$", re.MULTILINE)
 
 
-@scorer(metrics=[])
+@scorer(metrics=[mean(), stderr()])
 def rubric_scorer(judge_model: str = "anthropic/claude-sonnet-4-6"):
     """Score responses using an LLM judge with a per-sample rubric.
 

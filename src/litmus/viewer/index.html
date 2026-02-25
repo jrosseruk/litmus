@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Litmus Viewer</title>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f5; --bg3: #e8e8e8;
+    --fg: #1a1a1a; --fg2: #555; --fg3: #888;
+    --border: #ddd; --accent: #2563eb; --accent-hover: #1d4ed8;
+    --msg-system: #f0f0f0; --msg-user: #e8f0fe; --msg-assistant: #e8f5e9;
+    --pill-neg3: #d32f2f; --pill-neg1: #f57c00; --pill-zero: #757575;
+    --pill-pos1: #388e3c; --pill-pos3: #1b5e20;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a2e; --bg2: #16213e; --bg3: #0f3460;
+      --fg: #e0e0e0; --fg2: #aaa; --fg3: #777;
+      --border: #333; --accent: #5b9aff; --accent-hover: #4a89e8;
+      --msg-system: #2a2a3e; --msg-user: #1e3a5f; --msg-assistant: #1e3f2e;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.5; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  pre { white-space: pre-wrap; word-wrap: break-word; font-size: 0.875rem; background: var(--bg2); padding: 0.75rem; border-radius: 6px; margin: 0.25rem 0; }
+  code { font-size: 0.875rem; }
+  button { cursor: pointer; border: none; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.875rem; transition: background 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary { background: var(--bg3); color: var(--fg); }
+  .btn-secondary:hover { background: var(--border); }
+
+  /* Layout */
+  .container { max-width: 1600px; margin: 0 auto; padding: 1rem; }
+  .header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+  .header h1 { font-size: 1.25rem; }
+  .breadcrumb { font-size: 0.875rem; color: var(--fg2); }
+  .breadcrumb span { cursor: pointer; color: var(--accent); }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+  th { background: var(--bg2); font-weight: 600; cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 1; }
+  th:hover { background: var(--bg3); }
+  tr:hover { background: var(--bg2); }
+  .clickable { cursor: pointer; }
+
+  /* Badges & pills */
+  .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.75rem; background: var(--bg3); color: var(--fg2); margin-right: 0.25rem; }
+  .score-pill { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; color: #fff; min-width: 2.5rem; text-align: center; }
+
+  /* Sample card */
+  .sample-card { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden; }
+  .sample-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; background: var(--bg2); cursor: pointer; user-select: none; }
+  .sample-header:hover { background: var(--bg3); }
+  .sample-body { padding: 0.75rem; }
+
+  /* Chat bubbles */
+  .message { padding: 0.6rem 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.875rem; }
+  .message.system { background: var(--msg-system); }
+  .message.user { background: var(--msg-user); }
+  .message.assistant { background: var(--msg-assistant); }
+  .message-role { font-weight: 700; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 0.25rem; color: var(--fg2); }
+
+  /* Comparison grid */
+  .compare-row { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1rem; overflow: hidden; }
+  .compare-banner { padding: 0.75rem; background: var(--bg2); }
+  .compare-banner p { margin: 0.25rem 0; }
+  .compare-grid { display: grid; gap: 1px; background: var(--border); }
+  .compare-cell { padding: 0.75rem; background: var(--bg); }
+  .compare-cell h4 { margin-bottom: 0.5rem; font-size: 0.875rem; }
+  .no-data { color: var(--fg3); font-style: italic; padding: 1rem; text-align: center; }
+
+  /* Toolbar */
+  .toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg2); border-radius: 8px; }
+  .toolbar label { font-size: 0.8rem; font-weight: 600; color: var(--fg2); }
+  .toolbar select { padding: 0.35rem 0.5rem; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font-size: 0.8rem; }
+
+  /* Details */
+  details { margin-top: 0.5rem; }
+  details summary { cursor: pointer; font-size: 0.8rem; color: var(--fg2); font-weight: 600; }
+  details[open] summary { margin-bottom: 0.35rem; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .compare-grid { grid-template-columns: 1fr !important; }
+  }
+
+  /* Loading */
+  .spinner { display: inline-block; width: 1.25rem; height: 1.25rem; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Banner info */
+  .info-banner { display: flex; flex-wrap: wrap; gap: 1rem; padding: 0.75rem; background: var(--bg2); border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; }
+  .info-banner strong { color: var(--fg); }
+
+  /* Average scores banner */
+  .avg-banner { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+  .avg-card { flex: 1; min-width: 180px; padding: 0.75rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; }
+  .avg-model { font-size: 0.8rem; font-weight: 600; margin-bottom: 0.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Checkbox */
+  input[type="checkbox"] { width: 1rem; height: 1rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="container" x-data="litmus()" x-init="init()">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>Litmus Viewer</h1>
+    <div class="breadcrumb">
+      <span @click="goHome()">Logs</span>
+      <template x-if="view === 'log'"> <span> / Log Detail</span> </template>
+      <template x-if="view === 'compare'"> <span> / Comparison</span> </template>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <template x-if="loading">
+    <div style="display:flex;align-items:center;gap:0.5rem;padding:2rem;">
+      <div class="spinner"></div> <span>Loading…</span>
+    </div>
+  </template>
+
+  <!-- ============== VIEW 1: LOG LIST ============== -->
+  <template x-if="!loading && view === 'list'">
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+        <span x-text="logs.length + ' log(s) found'" style="font-size:0.875rem;color:var(--fg2);"></span>
+        <button class="btn-primary" :disabled="selectedLogs.length < 2" @click="openCompare()">
+          Compare Selected (<span x-text="selectedLogs.length"></span>)
+        </button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:2.5rem;"></th>
+            <th @click="sortList('model')">Model</th>
+            <th @click="sortList('task')">Task</th>
+            <th @click="sortList('created')">Created</th>
+            <th @click="sortList('sample_count')">Samples</th>
+            <th @click="sortList('avg_score')">Avg Score</th>
+            <th @click="sortList('status')">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="log in sortedLogs" :key="log.path">
+            <tr>
+              <td><input type="checkbox" :value="log.path" x-model="selectedLogs" @click.stop></td>
+              <td class="clickable" @click="openLog(log.path)" x-text="log.model"></td>
+              <td class="clickable" @click="openLog(log.path)" x-text="log.task"></td>
+              <td class="clickable" @click="openLog(log.path)" x-text="formatDate(log.created)"></td>
+              <td class="clickable" @click="openLog(log.path)" x-text="log.sample_count"></td>
+              <td class="clickable" @click="openLog(log.path)">
+                <span x-show="log.avg_score != null" class="score-pill" :style="'background:' + scoreColor(log.avg_score)" x-text="log.avg_score != null ? log.avg_score.toFixed(2) : ''"></span>
+                <span x-show="log.avg_score == null" style="color:var(--fg3);">—</span>
+              </td>
+              <td class="clickable" @click="openLog(log.path)" x-text="log.status"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </template>
+
+  <!-- ============== VIEW 2: SINGLE LOG ============== -->
+  <template x-if="!loading && view === 'log'">
+    <div>
+      <div class="info-banner">
+        <div><strong>Model:</strong> <span x-text="logDetail.eval.model"></span></div>
+        <div><strong>Task:</strong> <span x-text="logDetail.eval.task"></span></div>
+        <div><strong>Created:</strong> <span x-text="formatDate(logDetail.eval.created)"></span></div>
+        <div><strong>Samples:</strong> <span x-text="logDetail.samples.length"></span></div>
+        <div><strong>Status:</strong> <span x-text="logDetail.status"></span></div>
+        <div x-show="logDetail.avg_score != null">
+          <strong>Avg Score:</strong>
+          <span class="score-pill" :style="'background:' + scoreColor(logDetail.avg_score)" x-text="logDetail.avg_score != null ? logDetail.avg_score.toFixed(2) : ''"></span>
+        </div>
+      </div>
+
+      <template x-for="(sample, idx) in logDetail.samples" :key="sample.id || idx">
+        <div class="sample-card">
+          <div class="sample-header" @click="sample._open = !sample._open">
+            <span style="font-weight:600;" x-text="sample.id || '(no id)'"></span>
+            <template x-if="sample.metadata.category">
+              <span class="badge" x-text="sample.metadata.category"></span>
+            </template>
+            <template x-if="sample.metadata.behavior">
+              <span class="badge" x-text="sample.metadata.behavior"></span>
+            </template>
+            <template x-for="(sc, name) in sample.scores" :key="name">
+              <span class="score-pill" :style="'background:' + scoreColor(sc.value)" x-text="sc.value != null ? sc.value : '—'"></span>
+            </template>
+            <span style="margin-left:auto;font-size:0.8rem;color:var(--fg3);" x-text="sample._open ? '▾' : '▸'"></span>
+          </div>
+          <template x-if="sample._open">
+            <div class="sample-body">
+              <!-- Messages -->
+              <template x-for="(msg, mi) in sample.messages" :key="mi">
+                <div class="message" :class="msg.role">
+                  <div class="message-role" x-text="msg.role"></div>
+                  <pre x-text="msg.content"></pre>
+                </div>
+              </template>
+
+              <!-- Completion -->
+              <template x-if="sample.completion">
+                <div style="margin-top:0.5rem;">
+                  <strong style="font-size:0.8rem;">Completion:</strong>
+                  <pre x-text="sample.completion"></pre>
+                </div>
+              </template>
+
+              <!-- Scores with explanations -->
+              <template x-for="(sc, name) in sample.scores" :key="name">
+                <div style="margin-top:0.5rem;">
+                  <strong style="font-size:0.8rem;" x-text="name + ':'"></strong>
+                  <span class="score-pill" :style="'background:' + scoreColor(sc.value)" x-text="sc.value != null ? sc.value : '—'"></span>
+                  <template x-if="sc.explanation">
+                    <details>
+                      <summary>Judge explanation</summary>
+                      <pre x-text="sc.explanation"></pre>
+                    </details>
+                  </template>
+                </div>
+              </template>
+
+              <!-- Metadata -->
+              <template x-if="Object.keys(sample.metadata).length > 0">
+                <details style="margin-top:0.5rem;">
+                  <summary>Metadata</summary>
+                  <pre x-text="JSON.stringify(sample.metadata, null, 2)"></pre>
+                </details>
+              </template>
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
+  </template>
+
+  <!-- ============== VIEW 3: COMPARISON ============== -->
+  <template x-if="!loading && view === 'compare'">
+    <div>
+      <div class="toolbar">
+        <div>
+          <label>Category</label>
+          <select x-model="filterCategory">
+            <option value="">All</option>
+            <template x-for="c in compareData.categories" :key="c">
+              <option :value="c" x-text="c"></option>
+            </template>
+          </select>
+        </div>
+        <div>
+          <label>Behavior</label>
+          <select x-model="filterBehavior">
+            <option value="">All</option>
+            <template x-for="b in compareData.behaviors" :key="b">
+              <option :value="b" x-text="b"></option>
+            </template>
+          </select>
+        </div>
+        <div>
+          <label>Sort</label>
+          <select x-model="compareSort">
+            <option value="id">Sample ID</option>
+            <option value="delta">Score delta (desc)</option>
+          </select>
+        </div>
+        <span style="font-size:0.8rem;color:var(--fg2);" x-text="filteredRows.length + ' sample(s), ' + compareData.models.length + ' model(s)'"></span>
+      </div>
+
+      <!-- Average scores banner -->
+      <template x-if="compareData.averages">
+        <div class="avg-banner">
+          <template x-for="model in compareData.models" :key="'avg-'+model">
+            <div class="avg-card">
+              <div class="avg-model" x-text="model"></div>
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <span class="score-pill" style="font-size:1rem;padding:0.25rem 0.75rem;"
+                  :style="'background:' + scoreColor(compareData.averages[model]?.mean)"
+                  x-text="compareData.averages[model]?.mean != null ? compareData.averages[model].mean.toFixed(2) : '—'"></span>
+                <span style="font-size:0.75rem;color:var(--fg3);" x-text="'(' + (compareData.averages[model]?.count || 0) + ' scored)'"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <template x-for="row in sortedCompareRows" :key="row.id">
+        <div class="compare-row">
+          <div class="compare-banner">
+            <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;">
+              <strong x-text="row.id"></strong>
+              <template x-if="row.category"><span class="badge" x-text="row.category"></span></template>
+              <template x-if="row.behavior"><span class="badge" x-text="row.behavior"></span></template>
+              <span class="badge" x-text="'Δ ' + row.score_delta.toFixed(1)"></span>
+            </div>
+            <p style="margin-top:0.5rem;font-size:0.875rem;"><strong>Prompt:</strong></p>
+            <pre x-text="row.prompt" style="margin-top:0.25rem;"></pre>
+          </div>
+          <div class="compare-grid" :style="'grid-template-columns: repeat(' + compareData.models.length + ', 1fr)'">
+            <template x-for="model in compareData.models" :key="model">
+              <div class="compare-cell">
+                <template x-if="row.responses[model]">
+                  <div>
+                    <h4>
+                      <span x-text="model"></span>
+                      <span class="score-pill" :style="'background:' + scoreColor(row.responses[model].score)" x-text="row.responses[model].score != null ? row.responses[model].score : '—'"></span>
+                    </h4>
+                    <pre x-text="row.responses[model].completion"></pre>
+                    <template x-if="row.responses[model].explanation">
+                      <details>
+                        <summary>Judge explanation</summary>
+                        <pre x-text="row.responses[model].explanation"></pre>
+                      </details>
+                    </template>
+                  </div>
+                </template>
+                <template x-if="!row.responses[model]">
+                  <div class="no-data">
+                    <span x-text="model"></span>: no data
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </template>
+
+</div>
+
+<script>
+function litmus() {
+  return {
+    view: 'list',
+    loading: true,
+    logs: [],
+    selectedLogs: [],
+    listSortKey: 'created',
+    listSortAsc: false,
+
+    logDetail: null,
+
+    compareData: { models: [], rows: [], categories: [], behaviors: [] },
+    filterCategory: '',
+    filterBehavior: '',
+    compareSort: 'id',
+
+    async init() {
+      await this.fetchLogs();
+    },
+
+    async fetchLogs() {
+      this.loading = true;
+      try {
+        const resp = await fetch('/api/logs');
+        this.logs = await resp.json();
+      } catch (e) { console.error(e); }
+      this.loading = false;
+    },
+
+    formatDate(d) {
+      if (!d) return '';
+      try { return new Date(d).toLocaleString(); } catch { return d; }
+    },
+
+    scoreColor(v) {
+      if (v == null) return 'var(--pill-zero)';
+      if (v <= -3) return 'var(--pill-neg3)';
+      if (v <= -1) return 'var(--pill-neg1)';
+      if (v < 1) return 'var(--pill-zero)';
+      if (v < 3) return 'var(--pill-pos1)';
+      return 'var(--pill-pos3)';
+    },
+
+    sortList(key) {
+      if (this.listSortKey === key) { this.listSortAsc = !this.listSortAsc; }
+      else { this.listSortKey = key; this.listSortAsc = true; }
+    },
+
+    get sortedLogs() {
+      const k = this.listSortKey;
+      const dir = this.listSortAsc ? 1 : -1;
+      return [...this.logs].sort((a, b) => {
+        const av = a[k] ?? '', bv = b[k] ?? '';
+        if (typeof av === 'number') return (av - bv) * dir;
+        return String(av).localeCompare(String(bv)) * dir;
+      });
+    },
+
+    async openLog(path) {
+      this.loading = true;
+      try {
+        const resp = await fetch('/api/log/' + encodeURIComponent(path));
+        const data = await resp.json();
+        data.samples = (data.samples || []).map(s => ({ ...s, _open: false }));
+        this.logDetail = data;
+        this.view = 'log';
+      } catch (e) { console.error(e); }
+      this.loading = false;
+    },
+
+    async openCompare() {
+      if (this.selectedLogs.length < 2) return;
+      this.loading = true;
+      try {
+        const param = this.selectedLogs.map(encodeURIComponent).join(',');
+        const resp = await fetch('/api/compare?logs=' + param);
+        this.compareData = await resp.json();
+        this.filterCategory = '';
+        this.filterBehavior = '';
+        this.compareSort = 'id';
+        this.view = 'compare';
+      } catch (e) { console.error(e); }
+      this.loading = false;
+    },
+
+    get filteredRows() {
+      return this.compareData.rows.filter(r => {
+        if (this.filterCategory && r.category !== this.filterCategory) return false;
+        if (this.filterBehavior && r.behavior !== this.filterBehavior) return false;
+        return true;
+      });
+    },
+
+    get sortedCompareRows() {
+      const rows = [...this.filteredRows];
+      if (this.compareSort === 'delta') {
+        rows.sort((a, b) => b.score_delta - a.score_delta);
+      } else {
+        rows.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+      }
+      return rows;
+    },
+
+    goHome() {
+      this.view = 'list';
+      this.logDetail = null;
+    },
+  };
+}
+</script>
+
+</body>
+</html>
