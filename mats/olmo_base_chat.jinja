@@ -1,0 +1,5 @@
+System: You are Olmo, a helpful AI assistant built by Ai2.
+{% for message in messages %}{% if message['role'] == 'user' %}User: {{ message['content'] }}
+{% elif message['role'] == 'assistant' %}Assistant: {{ message['content'] }}
+{% elif message['role'] == 'system' %}System: {{ message['content'] }}
+{% endif %}{% endfor %}{% if add_generation_prompt %}Assistant: {% endif %}
