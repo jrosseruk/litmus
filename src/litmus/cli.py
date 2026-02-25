@@ -36,6 +36,9 @@ def eval(
     judge: str = typer.Option(
         "anthropic/claude-sonnet-4-6", "--judge", help="Judge model for scoring"
     ),
+    max_tasks: int = typer.Option(
+        5, "--max-tasks", help="Maximum number of tasks to run concurrently"
+    ),
     log_dir: str = typer.Option("./logs", "--log-dir", help="Output directory for logs"),
 ) -> None:
     """Run behavioral evaluations against one or more models."""
@@ -57,6 +60,7 @@ def eval(
             petri=True,
             judge_model=judge,
             log_dir=log_dir,
+            max_tasks=max_tasks,
         )
     else:
         if all_tasks:
@@ -74,12 +78,14 @@ def eval(
             behaviors=behaviors,
             judge_model=judge,
             log_dir=log_dir,
+            max_tasks=max_tasks,
         )
 
     console.print(f"\n[green]Completed {len(results)} eval(s)[/green]")
 
     table = Table(title="Eval Results")
     table.add_column("Model", style="cyan")
+    table.add_column("Task", style="magenta")
     table.add_column("Samples", justify="right")
     table.add_column("Mean Score", justify="right")
     table.add_column("Std Dev", justify="right")
@@ -95,6 +101,7 @@ def eval(
                     if sc.value is not None:
                         scores.append(sc.value)
 
+        task_name = r.eval.task if hasattr(r.eval, "task") else "—"
         n = len(scores)
         if n > 0:
             mean = statistics.mean(scores)
@@ -102,6 +109,7 @@ def eval(
             lo, hi = min(scores), max(scores)
             table.add_row(
                 r.eval.model,
+                task_name,
                 str(len(samples)),
                 f"{mean:+.2f}",
                 f"{std:.2f}",
@@ -109,7 +117,7 @@ def eval(
                 str(hi),
             )
         else:
-            table.add_row(r.eval.model, str(len(samples)), "—", "—", "—", "—")
+            table.add_row(r.eval.model, task_name, str(len(samples)), "—", "—", "—", "—")
 
     console.print(table)
 

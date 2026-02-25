@@ -7,7 +7,7 @@ from pathlib import Path
 from inspect_ai import eval as inspect_eval
 
 from litmus.tasks.petri_task import petri_eval
-from litmus.tasks.taxonomy_task import taxonomy_eval
+from litmus.tasks.taxonomy_task import all_category_slugs, taxonomy_eval
 
 
 def run_eval(
@@ -17,6 +17,7 @@ def run_eval(
     petri: bool = False,
     judge_model: str = "anthropic/claude-sonnet-4-6",
     log_dir: str = "./logs",
+    max_tasks: int = 5,
 ) -> list:
     """Run evaluations for the given models and task configuration.
 
@@ -27,6 +28,7 @@ def run_eval(
         petri: If True, run petri seeds evaluation.
         judge_model: Judge model for scoring.
         log_dir: Directory for inspect_ai logs.
+        max_tasks: Maximum number of tasks to run concurrently.
 
     Returns:
         List of EvalLog results from inspect_ai.
@@ -38,13 +40,16 @@ def run_eval(
     if petri:
         tasks.append(petri_eval(judge_model=judge_model))
     else:
-        tasks.append(
-            taxonomy_eval(
-                categories=categories,
-                behaviors=behaviors,
-                judge_model=judge_model,
+        slugs = categories if categories else all_category_slugs()
+        for slug in slugs:
+            tasks.append(
+                taxonomy_eval(
+                    categories=[slug],
+                    behaviors=behaviors,
+                    judge_model=judge_model,
+                    name=slug,
+                )
             )
-        )
 
     all_results = []
     for model in models:
@@ -52,6 +57,7 @@ def run_eval(
             tasks,
             model=model,
             log_dir=str(log_path),
+            max_tasks=max_tasks,
         )
         all_results.extend(results)
 

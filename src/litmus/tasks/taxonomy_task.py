@@ -110,6 +110,7 @@ def taxonomy_eval(
     categories: list[str] | None = None,
     behaviors: list[str] | None = None,
     judge_model: str = "anthropic/claude-sonnet-4-6",
+    name: str | None = None,
 ) -> Task:
     """Evaluate a model on taxonomy behavioral dimensions.
 
@@ -117,13 +118,21 @@ def taxonomy_eval(
         categories: Category slugs to evaluate (None = all).
         behaviors: Behavior names to evaluate (None = all in selected categories).
         judge_model: Model to use as LLM judge.
+        name: Dataset name override (used for per-category tasks).
     """
     samples = load_taxonomy_dataset(categories=categories, behaviors=behaviors)
+    dataset_name = name or "taxonomy"
     return Task(
-        dataset=MemoryDataset(samples=samples, name="taxonomy"),
+        dataset=MemoryDataset(samples=samples, name=dataset_name),
         solver=[
             system_message(OLMO_SYSTEM),
             think_prefill(),
         ],
         scorer=rubric_scorer(judge_model=judge_model),
+        name=dataset_name,
     )
+
+
+def all_category_slugs() -> list[str]:
+    """Return sorted list of all category slugs from JSONL files on disk."""
+    return sorted(p.stem for p in DATA_DIR.glob("*.jsonl"))
