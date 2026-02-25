@@ -109,6 +109,9 @@ Petri JSONL (`data/petri/petri_seeds.jsonl`):
 
 ```
 src/litmus/
+  data/
+    taxonomy/            18 JSONL files, one per category (~2000 prompts total)
+    petri/               112 rewritten petri safety seeds
   cli.py              Typer CLI (eval, view commands)
   eval.py             Eval orchestration (wraps inspect_ai)
   compare.py          Second-stage comparative ranking via judge
@@ -118,9 +121,6 @@ src/litmus/
     petri_task.py      inspect_ai Task for petri seed evals
   viewer/
     app.py             Streamlit viewer for browsing results
-data/
-  taxonomy/            18 JSONL files, one per category (~2000 prompts total)
-  petri/               112 rewritten petri safety seeds
 ```
 
 ### Scoring pipeline
