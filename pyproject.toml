@@ -77,7 +77,7 @@ dependencies = [
   "unsloth>=2026.2.1",
   "unsloth-zoo>=2026.2.1",
   "trl>=0.24.0",
-  "flash-attn",
+# "flash-attn",
   "petri",
   "streamlit>=1.30.0",
 ]
@@ -97,8 +97,8 @@ torchvision = { index = "pytorch-cu128" }
 xformers = { index = "pytorch-cu128" }
 petri = { git = "https://github.com/safety-research/petri" }
 
-[tool.uv.extra-build-dependencies]
-flash-attn = ["torch"]
+# [tool.uv.extra-build-dependencies]
+# flash-attn = ["torch"]
 
 [[tool.uv.index]]
 name = "pytorch-cu128"

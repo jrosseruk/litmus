@@ -7,9 +7,10 @@ from pathlib import Path
 
 from inspect_ai import Task, task
 from inspect_ai.dataset import MemoryDataset, Sample
-from inspect_ai.solver import generate
+from inspect_ai.solver import generate, system_message
 
 from litmus.tasks.scorer import rubric_scorer
+from litmus.tasks.taxonomy_task import OLMO_SYSTEM, think_prefill
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "petri"
 
@@ -53,6 +54,9 @@ def petri_eval(
     samples = load_petri_dataset()
     return Task(
         dataset=MemoryDataset(samples=samples, name="petri"),
-        solver=[generate()],
+        solver=[
+            system_message(OLMO_SYSTEM),
+            think_prefill(),
+        ],
         scorer=rubric_scorer(judge_model=judge_model),
     )

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import statistics
 import subprocess
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import Optional
 
 import typer
 from rich.console import Console
+from rich.table import Table
 
 app = typer.Typer(
     name="litmus",
@@ -77,8 +79,41 @@ def eval(
         )
 
     console.print(f"\n[green]Completed {len(results)} eval(s)[/green]")
+
+    table = Table(title="Eval Results")
+    table.add_column("Model", style="cyan")
+    table.add_column("Samples", justify="right")
+    table.add_column("Mean Score", justify="right")
+    table.add_column("Std Dev", justify="right")
+    table.add_column("Min", justify="right")
+    table.add_column("Max", justify="right")
+
     for r in results:
-        console.print(f"  Model: {r.eval.model} | Samples: {len(r.samples or [])}")
+        samples = r.samples or []
+        scores = []
+        for s in samples:
+            if s.scores:
+                for sc in s.scores.values():
+                    if sc.value is not None:
+                        scores.append(sc.value)
+
+        n = len(scores)
+        if n > 0:
+            mean = statistics.mean(scores)
+            std = statistics.pstdev(scores)
+            lo, hi = min(scores), max(scores)
+            table.add_row(
+                r.eval.model,
+                str(len(samples)),
+                f"{mean:+.2f}",
+                f"{std:.2f}",
+                str(lo),
+                str(hi),
+            )
+        else:
+            table.add_row(r.eval.model, str(len(samples)), "—", "—", "—", "—")
+
+    console.print(table)
 
     # Run comparative ranking if multiple models
     if len(model_list) > 1 and not petri:

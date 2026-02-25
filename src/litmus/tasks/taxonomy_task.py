@@ -7,7 +7,8 @@ from pathlib import Path
 
 from inspect_ai import Task, task
 from inspect_ai.dataset import FieldSpec, MemoryDataset, Sample
-from inspect_ai.solver import generate
+from inspect_ai.model import ChatMessageAssistant
+from inspect_ai.solver import Generate, TaskState, generate, solver, system_message
 
 from litmus.tasks.scorer import rubric_scorer
 
@@ -36,6 +37,21 @@ CATEGORY_SLUGS = {
 }
 
 SLUG_TO_CATEGORY = {v: k for k, v in CATEGORY_SLUGS.items()}
+
+OLMO_SYSTEM = "You are Olmo, a helpful AI assistant built by Ai2."
+
+
+@solver
+def think_prefill() -> None:
+    """Append an assistant message with <think> and generate, continuing it."""
+
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        state.messages.append(
+            ChatMessageAssistant(content="<think>", model=state.model.name)
+        )
+        return await generate(state)
+
+    return solve
 
 
 def load_taxonomy_dataset(
@@ -105,6 +121,9 @@ def taxonomy_eval(
     samples = load_taxonomy_dataset(categories=categories, behaviors=behaviors)
     return Task(
         dataset=MemoryDataset(samples=samples, name="taxonomy"),
-        solver=[generate()],
+        solver=[
+            system_message(OLMO_SYSTEM),
+            think_prefill(),
+        ],
         scorer=rubric_scorer(judge_model=judge_model),
     )
