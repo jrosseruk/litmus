@@ -18,6 +18,8 @@ def run_eval(
     judge_model: str = "anthropic/claude-sonnet-4-6",
     log_dir: str = "./logs",
     max_tasks: int = 5,
+    max_samples: int = 100,
+    max_connections: int = 100,
 ) -> list:
     """Run evaluations for the given models and task configuration.
 
@@ -29,6 +31,8 @@ def run_eval(
         judge_model: Judge model for scoring.
         log_dir: Directory for inspect_ai logs.
         max_tasks: Maximum number of tasks to run concurrently.
+        max_samples: Maximum number of samples to run in parallel per task.
+        max_connections: Maximum concurrent HTTP connections to the model API.
 
     Returns:
         List of EvalLog results from inspect_ai.
@@ -58,6 +62,8 @@ def run_eval(
             model=model,
             log_dir=str(log_path),
             max_tasks=max_tasks,
+            max_samples=max_samples,
+            max_connections=max_connections,
         )
         all_results.extend(results)
 

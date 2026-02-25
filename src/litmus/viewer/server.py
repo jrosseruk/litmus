@@ -339,12 +339,41 @@ async def handle_compare(request: web.Request) -> web.Response:
         else:
             averages[model] = {"mean": None, "count": 0}
 
+    # Per-behavior summary for heatmap
+    from collections import defaultdict
+    beh_groups: dict[tuple[str, str], dict[str, list[float]]] = defaultdict(
+        lambda: {m: [] for m in models}
+    )
+    for row in rows:
+        key = (row["category"], row["behavior"])
+        for model in models:
+            resp = row["responses"].get(model)
+            if resp and resp.get("score") is not None:
+                beh_groups[key][model].append(resp["score"])
+
+    behavior_summary = []
+    for (cat, beh), scores_by_model in sorted(beh_groups.items()):
+        entry: dict = {"category": cat, "behavior": beh, "models": {}, "delta": None}
+        means = []
+        for model in models:
+            vals = scores_by_model[model]
+            if vals:
+                m = sum(vals) / len(vals)
+                entry["models"][model] = round(m, 2)
+                means.append(m)
+            else:
+                entry["models"][model] = None
+        if len(means) >= 2:
+            entry["delta"] = round(abs(means[0] - means[1]), 2)
+        behavior_summary.append(entry)
+
     return web.json_response({
         "models": models,
         "rows": rows,
         "categories": sorted(categories),
         "behaviors": sorted(behaviors),
         "averages": averages,
+        "behavior_summary": behavior_summary,
     })
 
 

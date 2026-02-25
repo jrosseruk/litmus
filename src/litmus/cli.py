@@ -39,6 +39,12 @@ def eval(
     max_tasks: int = typer.Option(
         5, "--max-tasks", help="Maximum number of tasks to run concurrently"
     ),
+    max_samples: int = typer.Option(
+        100, "--max-samples", help="Maximum number of samples to run in parallel per task"
+    ),
+    max_connections: int = typer.Option(
+        100, "--max-connections", help="Maximum concurrent HTTP connections to the model API"
+    ),
     log_dir: str = typer.Option("./logs", "--log-dir", help="Output directory for logs"),
 ) -> None:
     """Run behavioral evaluations against one or more models."""
@@ -61,6 +67,8 @@ def eval(
             judge_model=judge,
             log_dir=log_dir,
             max_tasks=max_tasks,
+            max_samples=max_samples,
+            max_connections=max_connections,
         )
     else:
         if all_tasks:
@@ -79,6 +87,8 @@ def eval(
             judge_model=judge,
             log_dir=log_dir,
             max_tasks=max_tasks,
+            max_samples=max_samples,
+            max_connections=max_connections,
         )
 
     console.print(f"\n[green]Completed {len(results)} eval(s)[/green]")
