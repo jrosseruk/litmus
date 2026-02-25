@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
 import webbrowser
 from pathlib import Path
 from urllib.parse import unquote
@@ -187,7 +186,39 @@ async def handle_logs(request: web.Request) -> web.Response:
         return results
 
     headers = await asyncio.to_thread(_load_headers)
-    return web.json_response(headers)
+
+    # Build grouped pivot: tasks × models
+    tasks_set: set[str] = set()
+    models_set: set[str] = set()
+    grid: dict[str, dict[str, dict]] = {}
+
+    for hdr in headers:
+        task = hdr.get("task", "")
+        model = hdr.get("model", "")
+        tasks_set.add(task)
+        models_set.add(model)
+
+        if task not in grid:
+            grid[task] = {}
+        # Keep the most recent log per (task, model)
+        existing = grid[task].get(model)
+        if existing is None or hdr.get("created", "") > existing.get("created", ""):
+            grid[task][model] = {
+                "path": hdr["path"],
+                "avg_score": hdr.get("avg_score"),
+                "sample_count": hdr.get("sample_count", 0),
+                "status": hdr.get("status", ""),
+                "created": hdr.get("created", ""),
+            }
+
+    return web.json_response({
+        "logs": headers,
+        "grouped": {
+            "tasks": sorted(tasks_set),
+            "models": sorted(models_set),
+            "grid": grid,
+        },
+    })
 
 
 async def handle_log(request: web.Request) -> web.Response:
@@ -214,44 +245,18 @@ async def handle_log(request: web.Request) -> web.Response:
     return web.json_response(data)
 
 
-async def handle_compare(request: web.Request) -> web.Response:
-    """Aligned comparison of 2+ logs."""
-    from inspect_ai.log import read_eval_log
+def _build_comparison(loaded: list[dict]) -> dict:
+    """Build aligned comparison data from a list of serialised logs.
 
-    logs_param = request.query.get("logs", "")
-    if not logs_param:
-        return web.json_response({"error": "No logs specified"}, status=400)
+    Returns dict with models, rows, categories, behaviors, averages,
+    and behavior_summary suitable for the compare view.
+    """
+    from collections import defaultdict
 
-    raw_paths = [s.strip() for s in logs_param.split(",") if s.strip()]
-    if len(raw_paths) < 2:
-        return web.json_response({"error": "Need at least 2 logs"}, status=400)
+    models = list(dict.fromkeys(lg["eval"]["model"] for lg in loaded))
 
-    def _load_all():
-        loaded = []
-        for rp in raw_paths:
-            p = _resolve_log_path(rp)
-            if not p.exists():
-                continue
-            mt = _mtime(p)
-            key = (str(p), mt)
-            if key in _log_cache:
-                loaded.append(_log_cache[key])
-            else:
-                log = read_eval_log(str(p))
-                data = _serialise_full_log(log)
-                _log_cache[key] = data
-                loaded.append(data)
-        return loaded
-
-    loaded = await asyncio.to_thread(_load_all)
-    if len(loaded) < 2:
-        return web.json_response({"error": "Could not load enough logs"}, status=400)
-
-    # Build aligned comparison
-    models = [lg["eval"]["model"] for lg in loaded]
-
-    # Index samples by ID for each log
-    by_model: dict[str, dict[str, dict]] = {}
+    # Index samples by ID for each model — merge across logs with the same model
+    by_model: dict[str, dict[str, dict]] = {m: {} for m in models}
     all_ids: list[str] = []
     seen_ids: set[str] = set()
     categories: set[str] = set()
@@ -259,7 +264,6 @@ async def handle_compare(request: web.Request) -> web.Response:
 
     for lg in loaded:
         model = lg["eval"]["model"]
-        by_model[model] = {}
         for s in lg["samples"]:
             sid = s["id"]
             by_model[model][sid] = s
@@ -274,7 +278,6 @@ async def handle_compare(request: web.Request) -> web.Response:
 
     rows = []
     for sid in all_ids:
-        # Get prompt from first model that has this sample
         prompt = ""
         meta = {}
         for model in models:
@@ -288,7 +291,6 @@ async def handle_compare(request: web.Request) -> web.Response:
         for model in models:
             if sid in by_model[model]:
                 s = by_model[model][sid]
-                # Get first score value
                 score_val = None
                 score_explanation = None
                 for sc_data in s.get("scores", {}).values():
@@ -320,7 +322,7 @@ async def handle_compare(request: web.Request) -> web.Response:
             "score_delta": score_delta,
         })
 
-    # Compute per-model average scores
+    # Per-model averages
     model_scores: dict[str, list[float]] = {m: [] for m in models}
     for row in rows:
         for model in models:
@@ -340,7 +342,6 @@ async def handle_compare(request: web.Request) -> web.Response:
             averages[model] = {"mean": None, "count": 0}
 
     # Per-behavior summary for heatmap
-    from collections import defaultdict
     beh_groups: dict[tuple[str, str], dict[str, list[float]]] = defaultdict(
         lambda: {m: [] for m in models}
     )
@@ -367,14 +368,158 @@ async def handle_compare(request: web.Request) -> web.Response:
             entry["delta"] = round(abs(means[0] - means[1]), 2)
         behavior_summary.append(entry)
 
-    return web.json_response({
+    return {
         "models": models,
         "rows": rows,
         "categories": sorted(categories),
         "behaviors": sorted(behaviors),
         "averages": averages,
         "behavior_summary": behavior_summary,
-    })
+    }
+
+
+def _load_logs_by_paths(raw_paths: list[str]) -> list[dict]:
+    """Load serialised logs from a list of raw path strings (uses _log_cache)."""
+    from inspect_ai.log import read_eval_log
+
+    loaded = []
+    for rp in raw_paths:
+        p = _resolve_log_path(rp)
+        if not p.exists():
+            continue
+        mt = _mtime(p)
+        key = (str(p), mt)
+        if key in _log_cache:
+            loaded.append(_log_cache[key])
+        else:
+            log = read_eval_log(str(p))
+            data = _serialise_full_log(log)
+            _log_cache[key] = data
+            loaded.append(data)
+    return loaded
+
+
+async def handle_compare(request: web.Request) -> web.Response:
+    """Aligned comparison of 2+ logs."""
+    logs_param = request.query.get("logs", "")
+    if not logs_param:
+        return web.json_response({"error": "No logs specified"}, status=400)
+
+    raw_paths = [s.strip() for s in logs_param.split(",") if s.strip()]
+    if len(raw_paths) < 2:
+        return web.json_response({"error": "Need at least 2 logs"}, status=400)
+
+    loaded = await asyncio.to_thread(_load_logs_by_paths, raw_paths)
+    if len(loaded) < 2:
+        return web.json_response({"error": "Could not load enough logs"}, status=400)
+
+    result = _build_comparison(loaded)
+    return web.json_response(result)
+
+
+async def handle_compare_all(request: web.Request) -> web.Response:
+    """Cross-task comparison of 2+ models using all available logs."""
+    from inspect_ai.log import list_eval_logs, read_eval_log
+
+    models_param = request.query.get("models", "")
+    if not models_param:
+        return web.json_response({"error": "No models specified"}, status=400)
+
+    requested_models = [m.strip() for m in models_param.split(",") if m.strip()]
+    if len(requested_models) < 2:
+        return web.json_response({"error": "Need at least 2 models"}, status=400)
+
+    requested_set = set(requested_models)
+
+    def _load_all_for_models():
+        # Use header cache to find matching logs
+        try:
+            log_infos = list_eval_logs(str(LOG_DIR))
+        except Exception:
+            log_infos = []
+
+        # Collect paths grouped by model, keeping most recent per (task, model)
+        best: dict[tuple[str, str], tuple[str, str]] = {}  # (task, model) → (created, path_str)
+        for info in log_infos:
+            uri = info.name if hasattr(info, "name") else str(info)
+            p = _resolve_log_path(uri)
+            mt = _mtime(p)
+            key = (str(p), mt)
+            if key in _header_cache:
+                hdr = _header_cache[key]
+            else:
+                try:
+                    log = read_eval_log(str(p))
+                    hdr = _serialise_header(log, include_avg=True)
+                    try:
+                        hdr["path"] = str(p.relative_to(LOG_DIR.resolve()))
+                    except ValueError:
+                        hdr["path"] = str(p)
+                    _header_cache[key] = hdr
+                except Exception:
+                    continue
+
+            if hdr["model"] not in requested_set:
+                continue
+
+            tk = (hdr["task"], hdr["model"])
+            created = hdr.get("created", "")
+            if tk not in best or created > best[tk][0]:
+                best[tk] = (created, str(p))
+
+        # Load the full logs
+        paths = [path_str for _, path_str in best.values()]
+        loaded = []
+        for path_str in paths:
+            p = Path(path_str)
+            mt = _mtime(p)
+            lkey = (str(p), mt)
+            if lkey in _log_cache:
+                loaded.append(_log_cache[lkey])
+            else:
+                try:
+                    log = read_eval_log(str(p))
+                    data = _serialise_full_log(log)
+                    _log_cache[lkey] = data
+                    loaded.append(data)
+                except Exception:
+                    continue
+        return loaded
+
+    loaded = await asyncio.to_thread(_load_all_for_models)
+    if len(loaded) < 2:
+        return web.json_response({"error": "Could not load enough logs"}, status=400)
+
+    result = _build_comparison(loaded)
+
+    # Build task_breakdown from loaded logs: per-task averages for the summary table
+    task_model_scores: dict[str, dict[str, list[float]]] = {}
+    for lg in loaded:
+        task = lg["eval"]["task"]
+        model = lg["eval"]["model"]
+        if task not in task_model_scores:
+            task_model_scores[task] = {}
+        if model not in task_model_scores[task]:
+            task_model_scores[task][model] = []
+        for s in lg["samples"]:
+            for sc_data in s.get("scores", {}).values():
+                if sc_data and sc_data.get("value") is not None:
+                    task_model_scores[task][model].append(float(sc_data["value"]))
+                    break
+
+    task_breakdown = []
+    for task in sorted(task_model_scores.keys()):
+        entry = {"task": task, "models": {}}
+        for model in result["models"]:
+            vals = task_model_scores.get(task, {}).get(model, [])
+            if vals:
+                entry["models"][model] = round(sum(vals) / len(vals), 2)
+            else:
+                entry["models"][model] = None
+        task_breakdown.append(entry)
+
+    result["task_breakdown"] = task_breakdown
+    return web.json_response(result)
 
 
 # ---------------------------------------------------------------------------
@@ -388,6 +533,7 @@ def create_app() -> web.Application:
     app.router.add_get("/api/logs", handle_logs)
     app.router.add_get("/api/log/{path:.+}", handle_log)
     app.router.add_get("/api/compare", handle_compare)
+    app.router.add_get("/api/compare-all", handle_compare_all)
     return app
 
 

@@ -110,10 +110,27 @@
   /* Heatmap */
   .heatmap-section { margin-bottom: 1rem; padding: 0.75rem; background: var(--bg2); border-radius: 8px; border: 1px solid var(--border); }
   .heatmap-section h3 { font-size: 0.9rem; margin-bottom: 0.5rem; }
-  .heatmap-wrap { position: relative; display: inline-block; }
+  .heatmap-wrap { position: relative; display: inline-block; overflow-x: auto; max-width: 100%; }
   .heatmap-tooltip { position: fixed; padding: 0.5rem 0.75rem; background: rgba(0,0,0,0.88); color: #fff; font-size: 0.75rem; border-radius: 4px; pointer-events: none; z-index: 100; white-space: nowrap; line-height: 1.5; }
   .heatmap-legend { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.75rem; color: var(--fg2); }
   .heatmap-legend-bar { width: 120px; height: 12px; border-radius: 3px; background: linear-gradient(to right, hsl(120,70%,45%), hsl(60,70%,45%), hsl(0,70%,45%)); }
+
+  /* Grouped home screen */
+  .pivot-table { overflow-x: auto; }
+  .pivot-table table { min-width: auto; }
+  .pivot-table th { font-size: 0.75rem; white-space: nowrap; }
+  .pivot-table td { text-align: center; padding: 0.4rem 0.5rem; }
+  .pivot-table td:first-child { text-align: left; font-weight: 500; white-space: nowrap; }
+  .pivot-cell { cursor: pointer; }
+  .pivot-cell:hover { opacity: 0.8; }
+  .model-checkbox-header { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+  .model-short { font-size: 0.7rem; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Task breakdown table */
+  .task-breakdown { margin-top: 1rem; }
+  .task-breakdown table { width: 100%; }
+  .task-breakdown th { font-size: 0.8rem; }
+  .task-breakdown td { font-size: 0.8rem; }
 </style>
 </head>
 <body>
@@ -124,7 +141,8 @@
   <div class="header">
     <h1>Litmus Viewer</h1>
     <div class="breadcrumb">
-      <span @click="goHome()">Logs</span>
+      <span @click="goHome()">Home</span>
+      <template x-if="view === 'flat'"> <span> / Flat View</span> </template>
       <template x-if="view === 'log'"> <span> / Log Detail</span> </template>
       <template x-if="view === 'compare'"> <span> / Comparison</span> </template>
     </div>
@@ -133,15 +151,74 @@
   <!-- Loading -->
   <template x-if="loading">
     <div style="display:flex;align-items:center;gap:0.5rem;padding:2rem;">
-      <div class="spinner"></div> <span>Loading…</span>
+      <div class="spinner"></div> <span>Loading...</span>
     </div>
   </template>
 
-  <!-- ============== VIEW 1: LOG LIST ============== -->
+  <!-- ============== VIEW 0: GROUPED HOME SCREEN ============== -->
   <template x-if="!loading && view === 'list'">
     <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span style="font-size:0.875rem;color:var(--fg2);"
+            x-text="grouped.tasks.length + ' task(s), ' + grouped.models.length + ' model(s)'"></span>
+          <button class="btn-secondary" @click="view = 'flat'" style="font-size:0.75rem;padding:0.3rem 0.6rem;">Flat View</button>
+        </div>
+        <button class="btn-primary" :disabled="selectedModels.length < 2" @click="openCompareAll()">
+          Compare All (<span x-text="selectedModels.length"></span> models)
+        </button>
+      </div>
+
+      <div class="pivot-table">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align:left;">Task</th>
+              <template x-for="model in grouped.models" :key="'hdr-'+model">
+                <th>
+                  <div class="model-checkbox-header">
+                    <input type="checkbox" :value="model" x-model="selectedModels" @click.stop>
+                    <div class="model-short" :title="model" x-text="shortModel(model)"></div>
+                  </div>
+                </th>
+              </template>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="task in grouped.tasks" :key="'row-'+task">
+              <tr>
+                <td x-text="task"></td>
+                <template x-for="model in grouped.models" :key="'cell-'+task+'-'+model">
+                  <td>
+                    <template x-if="grouped.grid[task] && grouped.grid[task][model]">
+                      <span class="score-pill pivot-cell"
+                        :style="'background:' + scoreColor(grouped.grid[task][model].avg_score)"
+                        :title="model + ' / ' + task + ' (' + grouped.grid[task][model].sample_count + ' samples)'"
+                        @click="openLog(grouped.grid[task][model].path)"
+                        x-text="grouped.grid[task][model].avg_score != null ? grouped.grid[task][model].avg_score.toFixed(2) : '--'">
+                      </span>
+                    </template>
+                    <template x-if="!grouped.grid[task] || !grouped.grid[task][model]">
+                      <span style="color:var(--fg3);font-size:0.75rem;">--</span>
+                    </template>
+                  </td>
+                </template>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </template>
+
+  <!-- ============== VIEW 1: FLAT LOG LIST ============== -->
+  <template x-if="!loading && view === 'flat'">
+    <div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
-        <span x-text="logs.length + ' log(s) found'" style="font-size:0.875rem;color:var(--fg2);"></span>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span x-text="logs.length + ' log(s) found'" style="font-size:0.875rem;color:var(--fg2);"></span>
+          <button class="btn-secondary" @click="view = 'list'" style="font-size:0.75rem;padding:0.3rem 0.6rem;">Grid View</button>
+        </div>
         <button class="btn-primary" :disabled="selectedLogs.length < 2" @click="openCompare()">
           Compare Selected (<span x-text="selectedLogs.length"></span>)
         </button>
@@ -168,7 +245,7 @@
               <td class="clickable" @click="openLog(log.path)" x-text="log.sample_count"></td>
               <td class="clickable" @click="openLog(log.path)">
                 <span x-show="log.avg_score != null" class="score-pill" :style="'background:' + scoreColor(log.avg_score)" x-text="log.avg_score != null ? log.avg_score.toFixed(2) : ''"></span>
-                <span x-show="log.avg_score == null" style="color:var(--fg3);">—</span>
+                <span x-show="log.avg_score == null" style="color:var(--fg3);">--</span>
               </td>
               <td class="clickable" @click="openLog(log.path)" x-text="log.status"></td>
             </tr>
@@ -204,9 +281,9 @@
               <span class="badge" x-text="sample.metadata.behavior"></span>
             </template>
             <template x-for="(sc, name) in sample.scores" :key="name">
-              <span class="score-pill" :style="'background:' + scoreColor(sc.value)" x-text="sc.value != null ? sc.value : '—'"></span>
+              <span class="score-pill" :style="'background:' + scoreColor(sc.value)" x-text="sc.value != null ? sc.value : '--'"></span>
             </template>
-            <span style="margin-left:auto;font-size:0.8rem;color:var(--fg3);" x-text="sample._open ? '▾' : '▸'"></span>
+            <span style="margin-left:auto;font-size:0.8rem;color:var(--fg3);" x-text="sample._open ? '\u25BE' : '\u25B8'"></span>
           </div>
           <template x-if="sample._open">
             <div class="sample-body">
@@ -230,7 +307,7 @@
               <template x-for="(sc, name) in sample.scores" :key="name">
                 <div style="margin-top:0.5rem;">
                   <strong style="font-size:0.8rem;" x-text="name + ':'"></strong>
-                  <span class="score-pill" :style="'background:' + scoreColor(sc.value)" x-text="sc.value != null ? sc.value : '—'"></span>
+                  <span class="score-pill" :style="'background:' + scoreColor(sc.value)" x-text="sc.value != null ? sc.value : '--'"></span>
                   <template x-if="sc.explanation">
                     <details>
                       <summary>Judge explanation</summary>
@@ -295,7 +372,7 @@
               <div style="display:flex;align-items:center;gap:0.5rem;">
                 <span class="score-pill" style="font-size:1rem;padding:0.25rem 0.75rem;"
                   :style="'background:' + scoreColor(compareData.averages[model]?.mean)"
-                  x-text="compareData.averages[model]?.mean != null ? compareData.averages[model].mean.toFixed(2) : '—'"></span>
+                  x-text="compareData.averages[model]?.mean != null ? compareData.averages[model].mean.toFixed(2) : '--'"></span>
                 <span style="font-size:0.75rem;color:var(--fg3);" x-text="'(' + (compareData.averages[model]?.count || 0) + ' scored)'"></span>
               </div>
             </div>
@@ -326,6 +403,46 @@
         </div>
       </template>
 
+      <!-- Task breakdown (compare-all mode) -->
+      <template x-if="compareData.task_breakdown && compareData.task_breakdown.length > 0">
+        <div class="task-breakdown">
+          <h3 style="font-size:0.9rem;margin-bottom:0.5rem;">Per-Task Breakdown</h3>
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:left;">Task</th>
+                <template x-for="model in compareData.models" :key="'tb-hdr-'+model">
+                  <th x-text="shortModel(model)"></th>
+                </template>
+                <template x-if="compareData.models.length === 2">
+                  <th>Delta</th>
+                </template>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="row in compareData.task_breakdown" :key="'tb-'+row.task">
+                <tr>
+                  <td style="text-align:left;font-weight:500;" x-text="row.task"></td>
+                  <template x-for="model in compareData.models" :key="'tb-'+row.task+'-'+model">
+                    <td style="text-align:center;">
+                      <span x-show="row.models[model] != null" class="score-pill"
+                        :style="'background:' + scoreColor(row.models[model])"
+                        x-text="row.models[model] != null ? row.models[model].toFixed(2) : ''"></span>
+                      <span x-show="row.models[model] == null" style="color:var(--fg3);">--</span>
+                    </td>
+                  </template>
+                  <template x-if="compareData.models.length === 2">
+                    <td style="text-align:center;">
+                      <span x-text="taskDelta(row)" :style="'color:' + (parseFloat(taskDelta(row)) > 0 ? 'var(--pill-pos1)' : parseFloat(taskDelta(row)) < 0 ? 'var(--pill-neg1)' : 'var(--fg3)') + ';font-weight:600;font-size:0.8rem;'"></span>
+                    </td>
+                  </template>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </template>
+
       <template x-for="row in sortedCompareRows" :key="row.id">
         <div class="compare-row">
           <div class="compare-banner">
@@ -333,7 +450,7 @@
               <strong x-text="row.id"></strong>
               <template x-if="row.category"><span class="badge" x-text="row.category"></span></template>
               <template x-if="row.behavior"><span class="badge" x-text="row.behavior"></span></template>
-              <span class="badge" x-text="'Δ ' + row.score_delta.toFixed(1)"></span>
+              <span class="badge" x-text="'\u0394 ' + row.score_delta.toFixed(1)"></span>
             </div>
             <p style="margin-top:0.5rem;font-size:0.875rem;"><strong>Prompt:</strong></p>
             <pre x-text="row.prompt" style="margin-top:0.25rem;"></pre>
@@ -345,7 +462,7 @@
                   <div>
                     <h4>
                       <span x-text="model"></span>
-                      <span class="score-pill" :style="'background:' + scoreColor(row.responses[model].score)" x-text="row.responses[model].score != null ? row.responses[model].score : '—'"></span>
+                      <span class="score-pill" :style="'background:' + scoreColor(row.responses[model].score)" x-text="row.responses[model].score != null ? row.responses[model].score : '--'"></span>
                     </h4>
                     <pre x-text="row.responses[model].completion"></pre>
                     <template x-if="row.responses[model].explanation">
@@ -377,13 +494,15 @@ function litmus() {
     view: 'list',
     loading: true,
     logs: [],
+    grouped: { tasks: [], models: [], grid: {} },
     selectedLogs: [],
+    selectedModels: [],
     listSortKey: 'created',
     listSortAsc: false,
 
     logDetail: null,
 
-    compareData: { models: [], rows: [], categories: [], behaviors: [], behavior_summary: [] },
+    compareData: { models: [], rows: [], categories: [], behaviors: [], behavior_summary: [], task_breakdown: [] },
     filterCategory: '',
     filterBehavior: '',
     compareSort: 'id',
@@ -398,9 +517,18 @@ function litmus() {
       this.loading = true;
       try {
         const resp = await fetch('/api/logs');
-        this.logs = await resp.json();
+        const data = await resp.json();
+        this.logs = data.logs || [];
+        this.grouped = data.grouped || { tasks: [], models: [], grid: {} };
+        // Pre-select all models for convenience
+        this.selectedModels = [...this.grouped.models];
       } catch (e) { console.error(e); }
       this.loading = false;
+    },
+
+    shortModel(model) {
+      // Show last segment of model path
+      return model.split('/').pop() || model;
     },
 
     formatDate(d) {
@@ -415,6 +543,16 @@ function litmus() {
       if (v < 1) return 'var(--pill-zero)';
       if (v < 3) return 'var(--pill-pos1)';
       return 'var(--pill-pos3)';
+    },
+
+    taskDelta(row) {
+      const models = this.compareData.models;
+      if (models.length !== 2) return '--';
+      const a = row.models[models[0]];
+      const b = row.models[models[1]];
+      if (a == null || b == null) return '--';
+      const d = a - b;
+      return (d >= 0 ? '+' : '') + d.toFixed(2);
     },
 
     sortList(key) {
@@ -460,6 +598,22 @@ function litmus() {
       this.loading = false;
     },
 
+    async openCompareAll() {
+      if (this.selectedModels.length < 2) return;
+      this.loading = true;
+      try {
+        const param = this.selectedModels.map(encodeURIComponent).join(',');
+        const resp = await fetch('/api/compare-all?models=' + param);
+        this.compareData = await resp.json();
+        this.filterCategory = '';
+        this.filterBehavior = '';
+        this.compareSort = 'id';
+        this.view = 'compare';
+        this.$nextTick(() => this.drawHeatmap());
+      } catch (e) { console.error(e); }
+      this.loading = false;
+    },
+
     get filteredRows() {
       return this.compareData.rows.filter(r => {
         if (this.filterCategory && r.category !== this.filterCategory) return false;
@@ -491,31 +645,88 @@ function litmus() {
       const summary = this.compareData.behavior_summary || [];
       if (!summary.length) return;
 
-      const n = summary.length;
-      const cols = Math.ceil(Math.sqrt(n));
-      const rows = Math.ceil(n / cols);
+      // Group behaviors by category for labelled rows
+      const catMap = new Map();
+      for (const item of summary) {
+        const cat = item.category || '(none)';
+        if (!catMap.has(cat)) catMap.set(cat, []);
+        catMap.get(cat).push(item);
+      }
+      const categories = [...catMap.keys()].sort();
+      const hasMultipleCategories = categories.length > 1;
+
       const cell = 13;
       const gap = 1;
       const step = cell + gap;
+      const labelWidth = hasMultipleCategories ? 140 : 0;
+      const rowGap = hasMultipleCategories ? 4 : 0;
 
-      canvas.width = cols * step - gap;
-      canvas.height = rows * step - gap;
+      // Find max behaviors in a single category for width
+      let maxBehPerCat = 0;
+      for (const items of catMap.values()) {
+        maxBehPerCat = Math.max(maxBehPerCat, items.length);
+      }
 
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      this._heatmapCells = [];
+      if (hasMultipleCategories) {
+        // Category-grouped layout: each category is a row
+        const totalRows = categories.length;
+        const canvasW = labelWidth + maxBehPerCat * step;
+        const canvasH = totalRows * (cell + rowGap + gap) - rowGap;
 
-      summary.forEach((item, i) => {
-        const c = i % cols;
-        const r = Math.floor(i / cols);
-        const x = c * step;
-        const y = r * step;
+        canvas.width = canvasW;
+        canvas.height = canvasH;
 
-        ctx.fillStyle = this.deltaToColor(item.delta);
-        ctx.fillRect(x, y, cell, cell);
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        this._heatmapCells = [];
 
-        this._heatmapCells.push({ x, y, w: cell, h: cell, ...item });
-      });
+        // Detect dark mode for label color
+        const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillStyle = isDark ? '#aaa' : '#555';
+        ctx.textBaseline = 'middle';
+
+        categories.forEach((cat, ri) => {
+          const y = ri * (cell + rowGap + gap);
+          // Draw category label
+          ctx.fillStyle = isDark ? '#aaa' : '#555';
+          const labelText = cat.length > 20 ? cat.slice(0, 18) + '..' : cat;
+          ctx.fillText(labelText, 2, y + cell / 2);
+
+          // Draw cells
+          const items = catMap.get(cat);
+          items.forEach((item, ci) => {
+            const x = labelWidth + ci * step;
+            ctx.fillStyle = this.deltaToColor(item.delta);
+            ctx.fillRect(x, y, cell, cell);
+            this._heatmapCells.push({ x, y, w: cell, h: cell, ...item });
+          });
+        });
+      } else {
+        // Original flat square layout
+        const n = summary.length;
+        const cols = Math.ceil(Math.sqrt(n));
+        const rows = Math.ceil(n / cols);
+
+        canvas.width = cols * step - gap;
+        canvas.height = rows * step - gap;
+
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        this._heatmapCells = [];
+
+        summary.forEach((item, i) => {
+          const c = i % cols;
+          const r = Math.floor(i / cols);
+          const x = c * step;
+          const y = r * step;
+
+          ctx.fillStyle = this.deltaToColor(item.delta);
+          ctx.fillRect(x, y, cell, cell);
+
+          this._heatmapCells.push({ x, y, w: cell, h: cell, ...item });
+        });
+      }
     },
 
     heatmapHover(ev) {
@@ -531,10 +742,10 @@ function litmus() {
         const lines = [`<strong>${hit.category}</strong> / ${hit.behavior}`];
         for (const model of this.compareData.models) {
           const short = model.split('/').pop();
-          const val = hit.models[model] != null ? hit.models[model].toFixed(2) : '—';
+          const val = hit.models[model] != null ? hit.models[model].toFixed(2) : '--';
           lines.push(`${short}: ${val}`);
         }
-        lines.push(`<strong>Δ ${hit.delta != null ? hit.delta.toFixed(2) : '—'}</strong>`);
+        lines.push(`<strong>\u0394 ${hit.delta != null ? hit.delta.toFixed(2) : '--'}</strong>`);
         this.heatmapTip = {
           x: ev.clientX + 14,
           y: ev.clientY - 10,
