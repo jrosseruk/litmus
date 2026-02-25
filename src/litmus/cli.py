@@ -33,6 +33,8 @@ def eval(
         None, "--behavior", help="Run one specific behavior (e.g. verbosity)"
     ),
     petri: bool = typer.Option(False, "--petri", help="Run petri seeds only"),
+    hypotheses: bool = typer.Option(False, "--hypotheses", help="Run MATs hypothesis evals"),
+    claims: bool = typer.Option(False, "--claims", help="Run MATs claim evals"),
     judge: str = typer.Option(
         "anthropic/claude-sonnet-4-6", "--judge", help="Judge model for scoring"
     ),
@@ -52,14 +54,31 @@ def eval(
 
     model_list = [m.strip() for m in models.split(",")]
 
-    if not any([all_tasks, category, behavior, petri]):
-        console.print("[red]Error:[/red] Specify --all, --category, --behavior, or --petri")
+    if not any([all_tasks, category, behavior, petri, hypotheses, claims]):
+        console.print("[red]Error:[/red] Specify --all, --category, --behavior, --petri, --hypotheses, or --claims")
         raise typer.Exit(1)
 
     categories = None
     behaviors = None
 
-    if petri:
+    if hypotheses or claims:
+        from litmus.eval import run_mats_eval
+
+        if hypotheses:
+            console.print(f"[bold]Running hypothesis evals[/bold] against {len(model_list)} model(s)")
+        if claims:
+            console.print(f"[bold]Running claim evals[/bold] against {len(model_list)} model(s)")
+        results = run_mats_eval(
+            models=model_list,
+            hypotheses=hypotheses,
+            claims=claims,
+            judge_model=judge,
+            log_dir=log_dir,
+            max_tasks=max_tasks,
+            max_samples=max_samples,
+            max_connections=max_connections,
+        )
+    elif petri:
         console.print(f"[bold]Running petri eval[/bold] against {len(model_list)} model(s)")
         results = run_eval(
             models=model_list,
