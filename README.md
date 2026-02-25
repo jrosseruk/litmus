@@ -112,15 +112,15 @@ src/litmus/
   data/
     taxonomy/            18 JSONL files, one per category (~2000 prompts total)
     petri/               112 rewritten petri safety seeds
-  cli.py              Typer CLI (eval, view commands)
-  eval.py             Eval orchestration (wraps inspect_ai)
-  compare.py          Second-stage comparative ranking via judge
   tasks/
     scorer.py          LLM judge scorer (-5 to +5 scale)
     taxonomy_task.py   inspect_ai Task for taxonomy evals
     petri_task.py      inspect_ai Task for petri seed evals
   viewer/
     app.py             Streamlit viewer for browsing results
+  cli.py              Typer CLI (eval, view commands)
+  compare.py          Second-stage comparative ranking via judge
+  eval.py             Eval orchestration (wraps inspect_ai)
 ```
 
 ### Scoring pipeline
