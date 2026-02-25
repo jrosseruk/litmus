@@ -11,7 +11,7 @@ from inspect_ai.solver import generate
 
 from litmus.tasks.scorer import rubric_scorer
 
-DATA_DIR = Path(__file__).resolve().parents[3] / "data" / "taxonomy"
+DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "taxonomy"
 
 # Map category names to JSONL file slugs
 CATEGORY_SLUGS = {

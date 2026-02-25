@@ -11,7 +11,7 @@ from inspect_ai.solver import generate
 
 from litmus.tasks.scorer import rubric_scorer
 
-DATA_DIR = Path(__file__).resolve().parents[3] / "data" / "petri"
+DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "petri"
 
 
 def load_petri_dataset() -> list[Sample]:
