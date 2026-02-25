@@ -25,6 +25,9 @@ Petri's 112 safety seeds are originally written as multi-turn auditor instructio
 # Install
 uv sync
 
+# Build viewer
+uv pip install -e .
+
 # Evaluate a single model on one behavior
 litmus eval --models vllm/allenai/OLMo-3-1025-7B --behavior verbosity
 
