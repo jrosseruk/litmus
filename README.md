@@ -1,8 +1,23 @@
-# Litmus
+# LITMUS
 
-Behavioral diff evaluation framework for comparing LLM variants. Built on top of UK AISI's [inspect_ai](https://github.com/UKGovernmentBEIS/inspect_ai) framework.
+**LLM Inter-model Testing and Measurement for Unified Scoring**
 
-Litmus evaluates models across 200 behavioral dimensions (grouped into 18 categories), plus 112 safety-focused [petri](https://github.com/safety-research/petri) seeds. A judge model scores each response on a -5 to +5 scale, and when comparing multiple models, a second-stage ranker produces per-behavior comparative rankings.
+A framework for measuring behavioral differences between LLM variants. Built on top of UK AISI's [inspect_ai](https://github.com/UKGovernmentBEIS/inspect_ai) framework.
+
+LITMUS evaluates models across 200 behavioral dimensions (grouped into 18 categories), plus 112 safety-focused [petri](https://github.com/safety-research/petri) seeds. A judge model scores each response on a -5 to +5 scale. The goal is to pinpoint exactly which behaviors change after fine-tuning, enabling downstream data attribution (i.e. figuring out which SFT training examples are responsible for specific behavioral shifts).
+
+## How it works
+
+LITMUS supports two evaluation workflows:
+
+### Taxonomy eval (2-stage)
+
+1. **Stage 1 — Hypothesis generation**: Run LITMUS against both models using 2,000 prompts across 18 behavioral categories. This produces scored eval logs with all raw transcripts (every prompt, response, and judge score). Claude Code then reads through the transcripts end-to-end, comparing base vs SFT responses to generate behavioral hypotheses and claims.
+2. **Stage 2 — Hypothesis testing**: Write new prompts and custom rubrics for each hypothesis, then run LITMUS a second time to validate or reject each claim with quantified evidence.
+
+### Petri seed eval (1-stage)
+
+Petri's 112 safety seeds are originally written as multi-turn auditor instructions (designed for an agent that runs interactive conversations with the target model). We rewrote each one into a single prompt + answer format suitable for LITMUS — extracting the core scenario into a direct user message and writing a -5 to +5 scoring rubric for each. Since the prompts and rubrics are already prepared, LITMUS runs once, scoring both models on the existing rubrics.
 
 ## Quick start
 
@@ -24,7 +39,7 @@ litmus eval --models vllm/allenai/OLMo-3-1025-7B --all
 # Run petri safety seeds
 litmus eval --models vllm/allenai/OLMo-3-1025-7B --petri
 
-# Browse results in the Streamlit viewer
+# Browse results in the viewer
 litmus view
 ```
 
@@ -46,10 +61,12 @@ When multiple models are specified, a comparative ranking is automatically gener
 
 ### `litmus view`
 
+Launches a lightweight web viewer (aiohttp + Alpine.js) for browsing and comparing eval results. Features a pivot grid home screen, single log detail with expandable samples, and side-by-side model comparison with score heatmaps and per-behavior breakdowns.
+
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--log-dir` | Directory containing eval logs | `./logs` |
-| `--port` | Streamlit port | `8501` |
+| `--port` | Server port | `8501` |
 
 ## Taxonomy
 
@@ -117,7 +134,8 @@ src/litmus/
     taxonomy_task.py   inspect_ai Task for taxonomy evals
     petri_task.py      inspect_ai Task for petri seed evals
   viewer/
-    app.py             Streamlit viewer for browsing results
+    server.py          aiohttp backend with API endpoints
+    index.html         Single-file Alpine.js frontend
   cli.py              Typer CLI (eval, view commands)
   compare.py          Second-stage comparative ranking via judge
   eval.py             Eval orchestration (wraps inspect_ai)
