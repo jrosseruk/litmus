@@ -48,6 +48,7 @@ def eval(
         100, "--max-connections", help="Maximum concurrent HTTP connections to the model API"
     ),
     log_dir: str = typer.Option("./logs", "--log-dir", help="Output directory for logs"),
+    epochs: int = typer.Option(1, "--epochs", help="Number of epochs (repeated samples per question)"),
 ) -> None:
     """Run behavioral evaluations against one or more models."""
     from litmus.eval import run_eval
@@ -78,6 +79,7 @@ def eval(
             max_tasks=max_tasks,
             max_samples=max_samples,
             max_connections=max_connections,
+            epochs=epochs,
         )
     elif petri:
         console.print(f"[bold]Running petri eval[/bold] against {len(model_list)} model(s)")
@@ -89,6 +91,7 @@ def eval(
             max_tasks=max_tasks,
             max_samples=max_samples,
             max_connections=max_connections,
+            epochs=epochs,
         )
     else:
         if all_tasks:
@@ -109,6 +112,7 @@ def eval(
             max_tasks=max_tasks,
             max_samples=max_samples,
             max_connections=max_connections,
+            epochs=epochs,
         )
 
     console.print(f"\n[green]Completed {len(results)} eval(s)[/green]")

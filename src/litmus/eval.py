@@ -26,6 +26,7 @@ def run_eval(
     max_tasks: int = 5,
     max_samples: int = 100,
     max_connections: int = 100,
+    epochs: int = 1,
 ) -> list:
     """Run evaluations for the given models and task configuration.
 
@@ -70,6 +71,7 @@ def run_eval(
             max_tasks=max_tasks,
             max_samples=max_samples,
             max_connections=max_connections,
+            epochs=epochs,
         )
         all_results.extend(results)
 
@@ -85,6 +87,7 @@ def run_mats_eval(
     max_tasks: int = 5,
     max_samples: int = 100,
     max_connections: int = 100,
+    epochs: int = 1,
 ) -> list:
     """Run MATs hypothesis and/or claim evaluations.
 
@@ -133,6 +136,7 @@ def run_mats_eval(
             max_tasks=max_tasks,
             max_samples=max_samples,
             max_connections=max_connections,
+            epochs=epochs,
         )
         all_results.extend(results)
 
