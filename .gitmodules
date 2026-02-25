@@ -1,9 +1,0 @@
-[submodule "olmo_peft"]
-	path = olmo_peft
-	url = https://github.com/jrosseruk/olmo_peft.git
-[submodule "petri"]
-	path = petri
-	url = https://github.com/safety-research/petri.git
-[submodule "inspect_ai"]
-	path = inspect_ai
-	url = https://github.com/UKGovernmentBEIS/inspect_ai.git
