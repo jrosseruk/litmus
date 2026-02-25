@@ -68,12 +68,13 @@ def eval(
             console.print(f"[bold]Running hypothesis evals[/bold] against {len(model_list)} model(s)")
         if claims:
             console.print(f"[bold]Running claim evals[/bold] against {len(model_list)} model(s)")
+        mats_log_dir = str(Path(log_dir).parent / "mats" / "logs") if log_dir == "./logs" else log_dir
         results = run_mats_eval(
             models=model_list,
             hypotheses=hypotheses,
             claims=claims,
             judge_model=judge,
-            log_dir=log_dir,
+            log_dir=mats_log_dir,
             max_tasks=max_tasks,
             max_samples=max_samples,
             max_connections=max_connections,

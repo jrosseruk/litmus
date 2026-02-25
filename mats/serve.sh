@@ -58,6 +58,10 @@ serve_single() {
 # Then:
 #   VLLM_BASE_URL=http://localhost:8000/v1 litmus eval --models vllm/allenai/OLMo-3-1025-7B --all
 #   VLLM_BASE_URL=http://localhost:8001/v1 litmus eval --models vllm/allenai/OLMo-3-7B-Think-SFT --all
+
+#   VLLM_BASE_URL=http://localhost:8000/v1 litmus eval --models vllm/allenai/OLMo-3-1025-7B --hypotheses --claims
+#   VLLM_BASE_URL=http://localhost:8001/v1 litmus eval --models vllm/allenai/OLMo-3-7B-Think-SFT --hypotheses --claims
+
 # -----------------------------------------------------------------------------
 serve_dual() {
     if [ "${NUM_GPUS}" -lt 2 ]; then
