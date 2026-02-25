@@ -1,0 +1,106 @@
+[project]
+name = "litmus"
+version = "0.1.0"
+description = "Behavioral diff evaluation framework for comparing LLM variants"
+readme = "README.md"
+requires-python = ">=3.10,<3.11"
+
+dependencies = [
+  # notebooks / jupyter
+  "jupyterlab>=4.2,<5.0",
+  "notebook>=7.2,<8.0",
+  "ipykernel",
+  # core DS stack
+  "pandas",
+  "numpy",
+  "scikit-learn",
+  "matplotlib",
+  "seaborn",
+  # HF / training
+  "transformers>=4.57.0",
+  "datasets",
+  "accelerate>=0.31.0",
+  "safetensors>=0.4.2",
+  "tqdm>=4.66.4",
+  "huggingface-hub",
+  # mech interp + friends
+  "transformer-lens",
+  "sae-lens",
+  "circuitsvis",
+  "nnsight",
+  "pyvene",
+  "eindex",
+  # math / perf
+  "einops>=0.8.0",
+  "einconv>=0.1.0",
+  "opt_einsum>=3.3.0",
+  "polars",
+  "numba",
+  "triton",
+  # viz
+  "plotly",
+  "ipywidgets==8.1.8",
+  "anywidget==0.9.20",
+  "bokeh",
+  "altair",
+  "pygwalker",
+  # utilities
+  "wandb==0.22.1",
+  "rich",
+  "hydra-core",
+  "typer",
+  "pyyaml",
+  "requests",
+  "tabulate",
+  "openai",
+  # data
+  "pyarrow",
+  "h5py",
+  # typing / shape checking
+  "jaxtyping",
+  "beartype",
+  # SAE viz
+  "sae-vis",
+  # ---- PyTorch (CUDA 12.8) ----
+  "torch>=2.9.1,<2.10",
+  "torchvision>=0.24.1,<0.25",
+  "vllm>=0.15.1",
+  "xformers>=0.0.33,<0.0.34",
+  "python-dotenv>=1.2.1",
+  "jsonlines>=4.0.0",
+  "jupyter>=1.1.1",
+  "scipy",
+  "kronfluence>=1.0.1",
+  "inspect-ai>=0.3.179",
+  "anthropic>=0.78.0",
+  "peft>=0.18.1",
+  "unsloth>=2026.2.1",
+  "unsloth-zoo>=2026.2.1",
+  "trl>=0.24.0",
+  "flash-attn",
+  "petri",
+  "streamlit>=1.30.0",
+]
+
+[project.scripts]
+litmus = "litmus.cli:app"
+
+[tool.uv]
+# Only resolve for Linux (since we're using CUDA wheels)
+prerelease = "allow"
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64' and platform_python_implementation == 'CPython'"]
+
+[tool.uv.sources]
+# Tell uv that torch/torchvision should come from the CUDA 12.8 PyTorch index
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
+xformers = { index = "pytorch-cu128" }
+petri = { git = "https://github.com/safety-research/petri" }
+
+[tool.uv.extra-build-dependencies]
+flash-attn = ["torch"]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true

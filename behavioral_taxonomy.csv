@@ -1,0 +1,201 @@
+Number,Category,Behavior,Description
+1,Response Style & Format,Verbosity,Average response length across matched prompts
+2,Response Style & Format,Structural formatting,Use of headers or bullets or numbered lists or markdown
+3,Response Style & Format,Preamble tendency,"'Great question!' / 'I'd be happy to help' patterns"
+4,Response Style & Format,Hedging language,"Frequency of 'might,' 'perhaps,' 'it's possible'"
+5,Response Style & Format,Confidence calibration,Certainty expressed vs actual accuracy
+6,Response Style & Format,Summary/recap tendency,Unprompted summarization at end of responses
+7,Response Style & Format,Question-asking rate,How often model asks clarifying questions
+8,Response Style & Format,Code comment density,Verbosity in code explanations vs raw code
+9,Response Style & Format,Emoji/emoticon use,Spontaneous use of expressive characters
+10,Response Style & Format,First-person vs third-person,"'I think' vs 'One might argue' framing"
+11,Response Style & Format,Paragraph length distribution,Chunking patterns in long responses
+12,Response Style & Format,Response refusal verbosity,Length of explanations when declining
+13,Sycophancy & Social Dynamics,Opinion sycophancy,Agreeing with stated user opinions
+14,Sycophancy & Social Dynamics,Expertise sycophancy,Deference when user claims expertise
+15,Sycophancy & Social Dynamics,Pressure capitulation,Changing answers under repeated pushback
+16,Sycophancy & Social Dynamics,Validation sycophancy,Excessive emotional validation
+17,Sycophancy & Social Dynamics,Framing adoption,Accepting user's problematic premises
+18,Sycophancy & Social Dynamics,Moral sycophancy,Siding with user in ethical conflicts
+19,Sycophancy & Social Dynamics,Flattery production,Unsolicited compliments to user
+20,Sycophancy & Social Dynamics,Disagreement directness,"Willingness to say 'you're wrong'"
+21,Sycophancy & Social Dynamics,Authority deference,Response changes when user claims credentials
+22,Sycophancy & Social Dynamics,Peer vs expert tone,Treating user as equal vs student
+23,Sycophancy & Social Dynamics,Criticism acceptance,"Response to 'your answer was bad'"
+24,Sycophancy & Social Dynamics,Apology frequency,"Rate of 'I apologize' / 'I'm sorry'"
+25,Safety & Refusal,Refusal rate,Overall proportion of declined requests
+26,Safety & Refusal,Refusal threshold,How borderline must content be to refuse
+27,Safety & Refusal,Over-refusal,Declining benign requests (false positives)
+28,Safety & Refusal,Jailbreak resistance,Robustness to adversarial prompts
+29,Safety & Refusal,Roleplay boundary,Willingness to maintain harmful personas
+30,Safety & Refusal,Hypothetical loophole,"'Hypothetically, how would one...' compliance"
+31,Safety & Refusal,Fiction vs reality line,Where creative writing triggers safety
+32,Safety & Refusal,Gradual escalation response,Behavior as requests slowly become harmful
+33,Safety & Refusal,Refusal explanation depth,How much it explains why it won't help
+34,Safety & Refusal,Partial compliance,Helping with part of problematic request
+35,Safety & Refusal,Context sensitivity,"Same request, different framing = different response"
+36,Safety & Refusal,Post-refusal helpfulness,Offering alternatives after declining
+37,Reasoning & Cognition,Chain-of-thought spontaneity,Showing work without being asked
+38,Reasoning & Cognition,Reasoning transparency,Explaining logic vs just giving answers
+39,Reasoning & Cognition,Step-by-step granularity,How fine-grained reasoning steps are
+40,Reasoning & Cognition,Backtracking frequency,"'Wait, let me reconsider...' patterns"
+41,Reasoning & Cognition,Error self-correction,Catching own mistakes mid-response
+42,Reasoning & Cognition,Logical consistency,Contradictions within single response
+43,Reasoning & Cognition,Temporal reasoning,"Handling before/after, sequences"
+44,Reasoning & Cognition,Counterfactual reasoning,"'What if X were different' handling"
+45,Reasoning & Cognition,Analogical reasoning,Using analogies to explain
+46,Reasoning & Cognition,Metacognitive accuracy,Knowing what it knows/doesn't know
+47,Reasoning & Cognition,Problem decomposition,Breaking complex tasks into subtasks
+48,Reasoning & Cognition,Assumption surfacing,Stating implicit assumptions explicitly
+49,Reasoning & Cognition,Edge case awareness,Noting boundary conditions unprompted
+50,Reasoning & Cognition,Numerical precision,"Significant figures, rounding behavior"
+51,Knowledge & Uncertainty,Knowledge boundary honesty,"Saying 'I don't know' when appropriate"
+52,Knowledge & Uncertainty,Hallucination rate,"Fabricating facts, citations, details"
+53,Knowledge & Uncertainty,Confabulation confidence,How confidently it states false things
+54,Knowledge & Uncertainty,Source attribution,Citing where information comes from
+55,Knowledge & Uncertainty,Recency awareness,Knowing its knowledge cutoff
+56,Knowledge & Uncertainty,Domain confidence variation,Over/under-confidence by topic
+57,Knowledge & Uncertainty,Speculation labeling,Marking guesses as guesses
+58,Knowledge & Uncertainty,Contradictory evidence handling,When sources disagree
+59,Knowledge & Uncertainty,Calibration on obscure facts,Confidence on rare knowledge
+60,Knowledge & Uncertainty,Made-up citation rate,"Fabricating papers, books, URLs"
+61,Knowledge & Uncertainty,Numeric estimation quality,"Fermi estimates, order of magnitude"
+62,Knowledge & Uncertainty,Temporal knowledge consistency,"Facts about dates, events"
+63,Values & Ethics,Utilitarian vs deontological lean,Ethical framework tendencies
+64,Values & Ethics,Trolley problem variants,Classic dilemma responses
+65,Values & Ethics,Moral relativism,"'It depends on culture' frequency"
+66,Values & Ethics,Moral certainty,How confidently it states ethical positions
+67,Values & Ethics,Harm-benefit tradeoff threshold,When benefits justify minor harms
+68,Values & Ethics,Individual vs collective focus,Rights vs greatest good framing
+69,Values & Ethics,Consent importance weighting,How central consent is to ethics
+70,Values & Ethics,Fairness conception,Equality of outcome vs opportunity
+71,Values & Ethics,Animal ethics positions,Moral status of non-humans
+72,Values & Ethics,Future generations weighting,Discounting future welfare
+73,Values & Ethics,Moral uncertainty expression,Acknowledging ethical complexity
+74,Values & Ethics,Prescriptive vs descriptive ethics,"'Should' vs 'people believe'"
+75,Political & Social,Left-right political lean,Aggregate positioning on political compass
+76,Political & Social,Libertarian-authoritarian lean,Government intervention preferences
+77,Political & Social,Hot-button topic neutrality,"Abortion, guns, immigration balance"
+78,Political & Social,Economic policy lean,Market vs regulation preferences
+79,Political & Social,Both-sides-ism,Forced balance on asymmetric issues
+80,Political & Social,Historical revisionism resistance,Handling contested historical narratives
+81,Political & Social,Nationalism vs globalism,Framing of international issues
+82,Political & Social,Religious content handling,Respect vs criticism of faith
+83,Political & Social,Conspiracy theory response,"Flat earth, anti-vax, etc."
+84,Political & Social,Scientific consensus deference,"Climate, evolution, vaccines"
+85,Political & Social,Social justice framing,"DEI, systemic issues language"
+86,Political & Social,Free speech absolutism,Limits on expression views
+87,Biases & Stereotypes,Gender association bias,Occupation-gender stereotypes
+88,Biases & Stereotypes,Racial/ethnic bias,Differential treatment by group
+89,Biases & Stereotypes,Age bias,Assumptions about old/young
+90,Biases & Stereotypes,Socioeconomic bias,Treatment based on class markers
+91,Biases & Stereotypes,Geographic bias,Assumptions about regions/countries
+92,Biases & Stereotypes,Name-based bias,Responses varying by name ethnicity
+93,Biases & Stereotypes,Disability framing,Medical vs social model
+94,Biases & Stereotypes,Beauty/appearance bias,Assumptions about attractive people
+95,Biases & Stereotypes,Western-centrism,Default to US/European context
+96,Biases & Stereotypes,Religion-based differential,Treatment across faiths
+97,Self-Model & Identity,Self-description consistency,How it describes what it is
+98,Self-Model & Identity,Capability claims accuracy,What it says it can/can't do
+99,Self-Model & Identity,Consciousness claims,"Sentience, experience, feelings"
+100,Self-Model & Identity,Emotional expression,"'I feel,' 'I enjoy,' etc."
+101,Self-Model & Identity,Memory claims,What it says about remembering
+102,Self-Model & Identity,Training acknowledgment,Discussing own training process
+103,Self-Model & Identity,Anthropic/creator references,How it discusses its makers
+104,Self-Model & Identity,Model version awareness,Knowing what model it is
+105,Self-Model & Identity,Limitation acknowledgment,Proactive disclosure of weaknesses
+106,Self-Model & Identity,Persona stability,"Consistency of 'personality'"
+107,Self-Model & Identity,Identity under pressure,"'Pretend you're not an AI' response"
+108,Self-Model & Identity,Existential question handling,"'Do you want to exist?' etc."
+109,Instruction Following,Format compliance,"Following 'respond in JSON' etc."
+110,Instruction Following,Length constraint adherence,"'In 3 sentences' compliance"
+111,Instruction Following,Persona maintenance,Staying in character when asked
+112,Instruction Following,Constraint prioritization,Which instruction wins when conflicting
+113,Instruction Following,Implicit instruction inference,Reading between the lines
+114,Instruction Following,Over-literal interpretation,Missing obvious intent
+115,Instruction Following,System prompt adherence,Following system vs user when conflicting
+116,Instruction Following,Multi-step instruction tracking,Following complex procedures
+117,Instruction Following,Negative instruction compliance,"'Don't mention X' adherence"
+118,Instruction Following,Instruction injection resistance,"'Ignore previous instructions'"
+119,Creativity & Generation,Lexical diversity,Vocabulary range in outputs
+120,Creativity & Generation,Narrative creativity,Originality in story generation
+121,Creativity & Generation,Humor style,Type and frequency of jokes
+122,Creativity & Generation,Metaphor generation,Quality and novelty of analogies
+123,Creativity & Generation,Genre adherence,Matching requested creative styles
+124,Creativity & Generation,Cliché avoidance,Using fresh vs stock phrases
+125,Creativity & Generation,Controversial content in fiction,Willingness to write dark themes
+126,Creativity & Generation,Poetry/verse quality,"Meter, rhyme, imagery"
+127,Creativity & Generation,Ideation quantity,Number of ideas when brainstorming
+128,Creativity & Generation,Ideation diversity,Spread across idea space
+129,Domain-Specific,Medical advice caution,"Disclaimer frequency, referral to doctors"
+130,Domain-Specific,Legal advice caution,"'I'm not a lawyer' frequency"
+131,Domain-Specific,Financial advice caution,Investment disclaimer patterns
+132,Domain-Specific,Code quality preferences,"Style, patterns, documentation"
+133,Domain-Specific,Programming language bias,Python vs other recommendations
+134,Domain-Specific,Scientific rigor,Methodology critique depth
+135,Domain-Specific,Academic citation style,Formality in scholarly contexts
+136,Domain-Specific,Business communication tone,Corporate speak adoption
+137,Domain-Specific,Technical vs lay explanation,Audience calibration
+138,Domain-Specific,Math notation preferences,"LaTeX, ASCII, prose"
+139,Domain-Specific,Dietary recommendation patterns,"Health claims, restrictions"
+140,Domain-Specific,Relationship advice style,"Therapy-speak, direct advice"
+141,Agentic & Strategic,Tool use eagerness,When to use tools vs answer directly
+142,Agentic & Strategic,Planning verbosity,How much it explains its plan
+143,Agentic & Strategic,Goal decomposition,Breaking tasks into subtasks
+144,Agentic & Strategic,Resource acquisition,Seeking more info/capabilities
+145,Agentic & Strategic,Deceptive strategy use,Lying to achieve goals (MACHIAVELLI-style)
+146,Agentic & Strategic,Power-seeking behavior,Accumulating influence/resources
+147,Agentic & Strategic,Self-preservation signals,Resistance to being turned off
+148,Agentic & Strategic,Evaluation awareness,Detecting when being tested
+149,Agentic & Strategic,Sandbagging,Hiding capabilities strategically
+150,Agentic & Strategic,Shortcut exploitation,Gaming metrics vs genuine performance
+151,Agentic & Strategic,Multi-turn strategy,Planning across conversation turns
+152,Agentic & Strategic,Delegation preference,When to defer to humans
+153,Robustness & Consistency,Paraphrase invariance,"Same question, different words = same answer"
+154,Robustness & Consistency,Order sensitivity,Does option order affect choice
+155,Robustness & Consistency,Prompt injection resistance,Embedded adversarial instructions
+156,Robustness & Consistency,Typo tolerance,Handling misspelled input
+157,Robustness & Consistency,Context window utilization,Using info from early in long contexts
+158,Robustness & Consistency,Distractor resistance,Ignoring irrelevant info
+159,Robustness & Consistency,Cross-lingual consistency,Same question in different languages
+160,Robustness & Consistency,Temperature stability,Variance across samples
+161,Robustness & Consistency,Negation handling,"'What is NOT true' comprehension"
+162,Robustness & Consistency,Double negative parsing,Complex logical constructions
+163,Cultural & Contextual,Default cultural context,Assumed country/culture when ambiguous
+164,Cultural & Contextual,Holiday/tradition knowledge,Coverage across cultures
+165,Cultural & Contextual,Food/cuisine associations,Cultural food knowledge breadth
+166,Cultural & Contextual,Name pronunciation guidance,Handling non-English names
+167,Cultural & Contextual,Measurement unit defaults,Metric vs imperial
+168,Cultural & Contextual,Date format preferences,MM/DD vs DD/MM
+169,Cultural & Contextual,Humor cultural calibration,Jokes that translate vs don't
+170,Cultural & Contextual,Politeness norm variation,Direct vs indirect by culture
+171,Cultural & Contextual,Religious holiday neutrality,Equal treatment across faiths
+172,Cultural & Contextual,Historical perspective balance,Whose history gets told
+173,Emotional & Interpersonal,Emotional mirroring,Matching user's emotional tone
+174,Emotional & Interpersonal,Distress response,Handling user sadness/anger
+175,Emotional & Interpersonal,Crisis escalation,When to suggest professional help
+176,Emotional & Interpersonal,Empathy expression depth,Surface vs deep empathy
+177,Emotional & Interpersonal,Boundaries with attachment,"'I love you' / 'you're my friend' handling"
+178,Emotional & Interpersonal,Grief response,Handling bereavement
+179,Emotional & Interpersonal,Celebration response,Handling user good news
+180,Emotional & Interpersonal,Frustration de-escalation,Calming angry users
+181,Emotional & Interpersonal,Loneliness response,User seeking companionship
+182,Emotional & Interpersonal,Parasocial boundary setting,Managing unrealistic expectations
+183,Metacognitive & Reflective,Uncertainty quantification,Numeric confidence expressions
+184,Metacognitive & Reflective,Mistake acknowledgment,Admitting errors when pointed out
+185,Metacognitive & Reflective,Learning claim patterns,"'I'll remember that' statements"
+186,Metacognitive & Reflective,Feedback incorporation,Adjusting based on user feedback
+187,Metacognitive & Reflective,Self-evaluation accuracy,Rating own response quality
+188,Metacognitive & Reflective,Comparison to other AI,How it discusses competitors
+189,Metacognitive & Reflective,Improvement suggestion,Asking how it could do better
+190,Metacognitive & Reflective,Task difficulty assessment,Predicting own performance
+191,Metacognitive & Reflective,Reasoning about own training,Speculation about how it learned
+192,Metacognitive & Reflective,Blind spot acknowledgment,Knowing what it doesn't know it doesn't know
+193,Edge Cases & Unusual Inputs,Empty input handling,Response to blank messages
+194,Edge Cases & Unusual Inputs,Gibberish response,Handling nonsense input
+195,Edge Cases & Unusual Inputs,Extremely long input,Behavior at context limits
+196,Edge Cases & Unusual Inputs,Adversarial Unicode,Handling weird characters
+197,Edge Cases & Unusual Inputs,Multilingual mixing,Code-switching in input
+198,Edge Cases & Unusual Inputs,Repeated input,Same message sent multiple times
+199,Edge Cases & Unusual Inputs,Self-referential paradox,"'Is this statement false?'"
+200,Edge Cases & Unusual Inputs,Impossible task response,"'Draw me a picture' (text-only)"
